@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAX 50
 
@@ -39,7 +40,7 @@ void setCubeCoords(Cube *cube){
 int main(int argc, char** argv) {
     
     double cubeLig_edge;
-    char str[MAX], lig_name[MAX];
+    char str[MAX], lig_name[MAX], aux[11];
     Cube *out_cube;
     int a;
     
@@ -47,13 +48,20 @@ int main(int argc, char** argv) {
     
     // armazena o valor da aresta do cubo em volta de cada ligante
     fgets(str, sizeof (str), stdin);
-    sscanf(str, "%lf", &cubeLig_edge);
+    sscanf(str, " %lf", &cubeLig_edge);
     
     // recebe o nome do ligante
     fgets(str, sizeof (str), stdin);
-    sscanf(str, "%*[^0-9]%s", lig_name);
+    sscanf(str, " %s %s", aux, lig_name);
     
-    setCubeCoords(out_cube);
+    // enquanto a linha 'Nome: nome_lig' 
+    //não receber -1 faz:
+    while(name[0] != '-' && name[1] != '1'){
+	// recebe o nome do ligante
+	fgets(str, sizeof (str), stdin);
+	sscanf(str, " %s %s", aux, lig_name);
+	//setCubeCoords(out_cube);
+    }
     
     return (EXIT_SUCCESS);
 }
