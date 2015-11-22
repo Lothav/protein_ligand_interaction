@@ -23,6 +23,16 @@ typedef struct cube_str{
     double edge;
 }Cube;
 
+typedef struct leaf_st{
+
+    
+}Leaf;
+
+typedef struct tree_st{
+
+    Leaf b0,b1,b2,b3,b4,b5,b6,b7;
+
+}Tree;
 
 void setCubeCoords(Cube *cube){
       
@@ -47,20 +57,24 @@ int main(int argc, char** argv) {
     out_cube = (Cube *) malloc( sizeof(Cube) );
     
     // armazena o valor da aresta do cubo em volta de cada ligante
-    fgets(str, sizeof (str), stdin);
+    fgets(str, sizeof(str), stdin);
     sscanf(str, " %lf", &cubeLig_edge);
     
     // recebe o nome do ligante
-    fgets(str, sizeof (str), stdin);
+    fgets(str, sizeof(str), stdin);
     sscanf(str, " %s %s", aux, lig_name);
     
     // enquanto a linha 'Nome: nome_lig' 
-    //não receber -1 faz:
-    while(name[0] != '-' && name[1] != '1'){
-	// recebe o nome do ligante
+    // não receber -1 faz:
+    while(aux[0] != '-' && aux[1] != '1'){
+	// recebe o nome do ligante e o armazena em
+	// 'lig_name'. O aux é apenas para receber o '-1'
 	fgets(str, sizeof (str), stdin);
 	sscanf(str, " %s %s", aux, lig_name);
-	//setCubeCoords(out_cube);
+	
+	// lê e insere no cubo alocado as coordenadas
+	// de seus pontos extremos
+	setCubeCoords(out_cube);
     }
     
     return (EXIT_SUCCESS);
