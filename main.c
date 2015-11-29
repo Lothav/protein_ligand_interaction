@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX 50
+#define MAX 500
 
 typedef struct prot_st {
     // point[] refere-se à cordenada da da Proteína:
@@ -36,7 +36,7 @@ typedef struct cube_str {
     double min[3];
 } Cube;
 
-typedef struct Leaf* Pointer;
+//typedef struct Leaf* Pointer;
 
 typedef struct leaf_st {
     // boolena que verifica se a folha é de fato
@@ -45,7 +45,7 @@ typedef struct leaf_st {
     // ponteiro que aponta para essa struct
     // ou seja, dentro de Leaf, temos um 
     // "array de Leaf" com 8 filhos.
-    Pointer* sons[8];
+    struct leaf_st* sons[8];
     // cada folha também terá uma proteína.
     Protein* protein;
     // cada folha também terá coordenadas de máx e mín
@@ -69,16 +69,23 @@ void setCubeCoords(Leaf *leaf) {
 Protein* getNewProtein(Leaf *leaf) {
 
     Protein *new_prot;
-    char str[MAX];
+    char str[MAX], aux[MAX];
 
-    new_prot = (new_prot *) malloc(sizeof (new_prot));
+    // aloca espaço para nova proteína
+    new_prot = (Protein *) malloc(sizeof (Protein));
 
+    // lê a linha com os dados da nova proteína
     fgets(str, sizeof (str), stdin);
-    sscanf(str, " %lf %lf %lf", new_prot->point[0], new_prot->point[1], new_prot->point[2]);
+    // armazena os pontos da proteína
+    // (o aux é apenas para ignorar os nomes
+    // tenho sérios problemas com regex)
+    sscanf(str, " %s %s %lf %lf %lf", aux, aux, &new_prot->point[0], &new_prot->point[1], &new_prot->point[2]);
+    // retorna a nova proteína para que seja
+    // inserida na árvore.
     return new_prot;
 }
 
-Leaf* findLeaf(Leaf* root, int point[3]) {
+Leaf* findLeaf(Leaf* root, double point[3]) {
 
     int c;
     Leaf *aux;
@@ -95,7 +102,7 @@ Leaf* findLeaf(Leaf* root, int point[3]) {
 		point[2] > aux->coords->min[2]) {
 
 	    if (aux->is_leaf) return aux;
-	    else findLeaf(aux, protein);
+	    else findLeaf(aux, point);
 	}
 	aux = aux->sons[c];
     }
@@ -104,7 +111,7 @@ Leaf* findLeaf(Leaf* root, int point[3]) {
 int main(int argc, char** argv) {
 
     double cubeLig_edge;
-    char str[MAX], lig_name[MAX], aux[11], type;
+    char str[MAX], lig_name[MAX], aux[11], type[30];
     Leaf *root, *leaf;
     int a;
     Protein* new_protein;
@@ -112,43 +119,39 @@ int main(int argc, char** argv) {
     root = (Leaf *) malloc(sizeof (Leaf));
     root->protein = NULL;
     root->is_leaf = 1;
+    root->coords = (Cube *) malloc( sizeof(Cube) );
 
     // armazena o valor da aresta do cubo em volta de cada ligante
     fgets(str, sizeof (str), stdin);
     sscanf(str, " %lf", &cubeLig_edge);
 
-    // recebe o nome do ligante
+    // recebe o nome do ligante e o armazena em
+    // 'lig_name'. O aux é apenas para receber o '-1'
     fgets(str, sizeof (str), stdin);
     sscanf(str, " %s %s", aux, lig_name);
 
     // enquanto a linha 'Nome: nome_lig' 
     // não receber -1 faz:
     while (aux[0] != '-' && aux[1] != '1') {
-	// recebe o nome do ligante e o armazena em
-	// 'lig_name'. O aux é apenas para receber o '-1'
-	fgets(str, sizeof (str), stdin);
-	sscanf(str, " %s %s", aux, lig_name);
-
+	
 	// lê e insere no cubo alocado as coordenadas
 	// de seus pontos extremos na raiz.
 	setCubeCoords(root);
 
-	fgets(str, sizeof (str), stdin);
-	sscanf(str, " %c", &type);
-	while (type == "P") {
-	    // cria uma nova proteína:
-	    //  - aloca espaço para ela
-	    //  - recebe as coordenadas do stdin
-	    new_protein = getNewProtein(root);
-	    // percorre a raiz e encontra a folha
-	    // referente às coordenadas da nova proteína.
-	    leaf = findLeaf(root, new_protein->point);
-	    leaf->protein = new_protein;
-	    leaf->is_leaf = 1;
 
-	    fgets(str, sizeof (str), stdin);
-	    sscanf(str, " %   ", &type);
-	}
+	// cria uma nova proteína:
+	//  - aloca espaço para ela
+	//  - recebe as coordenadas do stdin
+	new_protein = getNewProtein(root);
+	// percorre a raiz e encontra a folha
+	// referente às coordenadas da nova proteína.
+	leaf = findLeaf(root, new_protein->point);
+	leaf->protein = new_protein;
+	leaf->is_leaf = 1;
+
+	fgets(str, sizeof (str), stdin);
+	sscanf(str, " %s %", &type);
+	
     }
 
     return (EXIT_SUCCESS);
