@@ -1,9 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /* 
  * File:   main.c
  * Author: LuizOtavio
@@ -66,16 +60,14 @@ void setCubeCoords(Leaf *leaf) {
     sscanf(str, " %lf %lf %lf", &leaf->coords->max[0], &leaf->coords->max[1], &leaf->coords->max[2]);
 }
 
-Protein* getNewProtein(Leaf *leaf) {
+Protein* getNewProtein(Leaf *leaf, char* str) {
 
     Protein *new_prot;
-    char str[MAX], aux[MAX];
+    char aux[MAX];
 
     // aloca espaço para nova proteína
     new_prot = (Protein *) malloc(sizeof (Protein));
 
-    // lê a linha com os dados da nova proteína
-    fgets(str, sizeof (str), stdin);
     // armazena os pontos da proteína
     // (o aux é apenas para ignorar os nomes
     // tenho sérios problemas com regex)
@@ -85,26 +77,125 @@ Protein* getNewProtein(Leaf *leaf) {
     return new_prot;
 }
 
-Leaf* findLeaf(Leaf* root, double point[3]) {
+Leaf* findLeaf(Leaf* root, double* point) {
 
     int c;
     Leaf *aux;
 
+    // Função Recursiva:
+    // procura na arvore o filho com
+    // as coordenadas passadas no 'point'.
+    // ao encontrar, se for uma folha, retorna
+    // para que seja inserida, se for um nó, 
+    // procura entre seus filhos.
+    if(root->is_leaf){
+	return root;
+    }
     aux = root;
     for (c = 0; c < 8; c++) {
-	if (aux != NULL &&
-		point[0] < aux->coords->max[0] &&
-		point[1] < aux->coords->max[1] &&
-		point[2] < aux->coords->max[2] &&
+	if (aux->sons[c] != NULL &&
+		point[0] < aux->sons[c]->coords->max[0] &&
+		point[1] < aux->sons[c]->coords->max[1] &&
+		point[2] < aux->sons[c]->coords->max[2] &&
+		
+		point[0] > aux->sons[c]->coords->min[0] &&
+		point[1] > aux->sons[c]->coords->min[1] &&
+		point[2] > aux->sons[c]->coords->min[2] ) {
 
-		point[0] > aux->coords->min[0] &&
-		point[1] > aux->coords->min[1] &&
-		point[2] > aux->coords->min[2]) {
-
-	    if (aux->is_leaf) return aux;
-	    else findLeaf(aux, point);
+	    if (aux->sons[c]->is_leaf) return aux->sons[c];
+	    else findLeaf(aux->sons[c], point);
 	}
-	aux = aux->sons[c];
+    }
+}
+
+void setUpperCubes(Leaf* leaf, Cube* root_coords, double* half_edge) {
+
+    int index;
+    Cube coords[4];
+
+    for (index = 0; index <= 3; index++) {
+
+	leaf->sons[index + 4] = (Leaf *) malloc(sizeof (Leaf));
+	leaf->sons[index + 4]->coords = (Cube *) malloc(sizeof (Cube));
+	leaf->sons[index + 4]->is_leaf = 1;
+
+	coords[index] = *root_coords;
+	leaf->sons[index + 4]->coords = &coords[index];
+	leaf->sons[index + 4]->coords->max[index] -= half_edge[index];
+	leaf->sons[index + 4]->coords->min[index] -= half_edge[index];
+    }
+}
+
+void setLowerCubes(Leaf* leaf, Cube* root_coords, double* half_edge) {
+
+    int index;
+    Cube coords[4];
+
+    for (index = 0; index <= 3; index++) {
+
+	leaf->sons[index + 1] = (Leaf *) malloc(sizeof (Leaf));
+	leaf->sons[index + 1]->coords = (Cube *) malloc(sizeof (Cube));
+	leaf->sons[index + 1]->is_leaf = 1;
+	
+	coords[index] = *root_coords;
+
+	leaf->sons[index + 1]->coords = &coords[index];
+	leaf->sons[index + 1]->coords->max[index] += half_edge[index];
+	leaf->sons[index + 1]->coords->min[index] += half_edge[index];
+    }
+}
+
+void splitCubes(Leaf* leaf, double* half_edge) {
+
+    Cube* root_lower, *root_upper;
+    Cube coords[8];
+    int index;
+
+    leaf->is_leaf = 0;
+    leaf->protein = NULL;
+
+    leaf->sons[0] = (Leaf *) malloc(sizeof (Leaf));
+    leaf->sons[0]->coords = (Cube *) malloc(sizeof (Cube));
+    coords[0] = *leaf->coords;
+    leaf->sons[0]->coords = &coords[0];
+    leaf->sons[0]->is_leaf = 1;
+    root_lower = leaf->sons[0]->coords;
+
+    leaf->sons[7] = (Leaf *) malloc(sizeof (Leaf));
+    leaf->sons[7]->coords = (Cube *) malloc(sizeof (Cube));
+    coords[7] = *leaf->coords;
+    leaf->sons[7]->coords = &coords[7];
+    leaf->sons[7]->is_leaf = 1;
+    root_upper = leaf->sons[7]->coords;
+
+    for (index = 0; index <= 3; index++) {
+	root_lower->max[index] -= half_edge[index];
+	root_upper->min[index] += half_edge[index];
+    }
+
+    setLowerCubes(leaf, root_lower, half_edge);
+    setUpperCubes(leaf, root_lower, half_edge);
+}
+
+void setLeafProtein(Leaf* leaf, Protein* new_protein) {
+
+    double half_edge[3];
+    Protein * protein, pro_aux;
+    Leaf * new_leaf;
+
+    if (leaf->protein == NULL) {
+	leaf->protein = new_protein;
+    } else {
+
+	half_edge[0] = (leaf->coords->max[0] - leaf->coords->min[0]) / 2;
+	half_edge[1] = (leaf->coords->max[1] - leaf->coords->min[1]) / 2;
+	half_edge[2] = (leaf->coords->max[2] - leaf->coords->min[2]) / 2;
+
+	pro_aux = *leaf->protein;
+	protein = &pro_aux;
+	splitCubes(leaf, half_edge);
+	new_leaf = findLeaf(leaf, protein->point);
+	setLeafProtein(new_leaf, protein);
     }
 }
 
@@ -119,41 +210,39 @@ int main(int argc, char** argv) {
     root = (Leaf *) malloc(sizeof (Leaf));
     root->protein = NULL;
     root->is_leaf = 1;
-    root->coords = (Cube *) malloc( sizeof(Cube) );
-
+    root->coords = (Cube *) malloc(sizeof (Cube));
+    
     // armazena o valor da aresta do cubo em volta de cada ligante
     fgets(str, sizeof (str), stdin);
     sscanf(str, " %lf", &cubeLig_edge);
 
-    // recebe o nome do ligante e o armazena em
-    // 'lig_name'. O aux é apenas para receber o '-1'
-    fgets(str, sizeof (str), stdin);
-    sscanf(str, " %s %s", aux, lig_name);
-
     // enquanto a linha 'Nome: nome_lig' 
     // não receber -1 faz:
     while (aux[0] != '-' && aux[1] != '1') {
-	
+
+	// recebe o nome do ligante e o armazena em
+	// 'lig_name'.
+	fgets(str, sizeof (str), stdin);
+	sscanf(str, " %s %s", aux, lig_name);
+
 	// lê e insere no cubo alocado as coordenadas
 	// de seus pontos extremos na raiz.
 	setCubeCoords(root);
 
-
-	// cria uma nova proteína:
-	//  - aloca espaço para ela
-	//  - recebe as coordenadas do stdin
-	new_protein = getNewProtein(root);
-	// percorre a raiz e encontra a folha
-	// referente às coordenadas da nova proteína.
-	leaf = findLeaf(root, new_protein->point);
-	leaf->protein = new_protein;
-	leaf->is_leaf = 1;
-
 	fgets(str, sizeof (str), stdin);
-	sscanf(str, " %s %", &type);
-	
-    }
+	while (str[0] != 'N') {
 
+	    // cria uma nova proteína:
+	    //  - aloca espaço para ela
+	    //  - recebe as coordenadas do stdin
+	    new_protein = getNewProtein(root, str);
+	    // percorre a raiz e encontra a folha
+	    // referente às coordenadas da nova proteína.
+	    leaf = findLeaf(root, new_protein->point);
+
+	    setLeafProtein(leaf, new_protein);
+	    fgets(str, sizeof (str), stdin);
+	}
+    }
     return (EXIT_SUCCESS);
 }
-
