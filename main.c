@@ -18,7 +18,6 @@ typedef struct prot_st {
     //  - point[1] = y
     //  - point[2] = z
     double point[3];
-    int isSet;
 } Protein;
 
 typedef struct cube_str {
@@ -106,64 +105,7 @@ Leaf* findLeaf(Leaf* root, double* point) {
     }
 }
 
-/*void setUpperCubes(Leaf* leaf, Cube root_coords, double* half_edge) {
-
-    int index;
-
-    for (index = 0; index <= 3; index++) {
-
-	leaf->sons[index + 4] = (Leaf *) malloc(sizeof (Leaf));
-        leaf->sons[index + 4]->protein.isSet = 0;
-	leaf->sons[index + 4]->is_leaf = 1;
-
-	leaf->sons[index + 4]->coords = root_coords;
-	leaf->sons[index + 4]->coords.max[index] -= half_edge[index];
-	leaf->sons[index + 4]->coords.min[index] -= half_edge[index];
-    }
-}
-
-void setLowerCubes(Leaf* leaf, Cube root_coords, double* half_edge) {
-
-    int index;
-
-    for (index = 0; index <= 3; index++) {
-	leaf->sons[index + 1] = (Leaf *) malloc(sizeof (Leaf));
-        leaf->sons[index + 1]->protein.isSet = 0;
-	leaf->sons[index + 1]->is_leaf = 1;
-	leaf->sons[index + 1]->coords = root_coords;
-	leaf->sons[index + 1]->coords.max[index] += half_edge[index];
-	leaf->sons[index + 1]->coords.min[index] += half_edge[index];
-    }
-}
-
-void splitCubes(Leaf* leaf, double* half_edge) {
-
-    Cube root_lower, root_upper;
-    int index;
-
-    leaf->is_leaf = 0;
-
-    leaf->sons[0] = (Leaf *) malloc(sizeof (Leaf));
-    leaf->sons[0]->coords = leaf->coords;   
-    leaf->sons[0]->protein.isSet = 0;
-    leaf->sons[0]->is_leaf = 1;
-    root_lower = leaf->sons[0]->coords;
-
-    leaf->sons[7] = (Leaf *) malloc(sizeof (Leaf));
-    leaf->sons[7]->coords = leaf->coords;  
-    leaf->sons[7]->is_leaf = 1;
-    leaf->sons[7]->protein.isSet = 0;
-    root_upper = leaf->sons[7]->coords;
-
-    for (index = 0; index <= 3; index++) {
-	root_lower.max[index] -= half_edge[index];
-	root_upper.min[index] += half_edge[index];
-    }
-
-    setLowerCubes(leaf, root_lower, half_edge);
-    setUpperCubes(leaf, root_lower, half_edge);
- * 
- * 
+/*
               *-----------*
             /     /     / |
           / - - / - - /   |
@@ -198,19 +140,19 @@ void splitCubes(Leaf* leaf, double* half_edge) {
     upper.min[2] = leaf->coords.min[2] + half_edge[2];
     
     // Aloca memória para todos os filhos da folha
-    // e transforma ela em um NÓ
+    // e transforma ela em um NÓ.
     for(c = 0; c < 4; c++){
         leaf->sons[c] = (Leaf *) malloc(sizeof (Leaf));
         leaf->sons[c]->coords = lower;  
         leaf->sons[c]->is_leaf = 1;
-        leaf->sons[c]->protein.isSet = 0;
+        leaf->sons[c]->protein.point[0] = MAX;
     }
     
     for(c = 4; c < 8; c++){
         leaf->sons[c] = (Leaf *) malloc(sizeof (Leaf));
         leaf->sons[c]->coords = upper;  
         leaf->sons[c]->is_leaf = 1;
-        leaf->sons[c]->protein.isSet = 0;
+        leaf->sons[c]->protein.point[0] = MAX;
     }
     
     
@@ -230,11 +172,10 @@ void setLeafProtein(Leaf* leaf, Protein new_protein) {
 
     double half_edge[3];
     Protein protein, pro_aux;
-    Leaf* new_leaf;
+    Leaf *new_leaf;
 
-    if (!leaf->protein.isSet) {
+    if (leaf->protein.point[0] == MAX) {
 	leaf->protein = new_protein;
-        leaf->protein.isSet = 1;
     } else {
 
 	half_edge[0] = (leaf->coords.max[0] - leaf->coords.min[0]) / 2;
@@ -242,9 +183,15 @@ void setLeafProtein(Leaf* leaf, Protein new_protein) {
 	half_edge[2] = (leaf->coords.max[2] - leaf->coords.min[2]) / 2;
 
 	protein = leaf->protein;
+        leaf->is_leaf = 0;
 	splitCubes(leaf, half_edge);
+        
 	new_leaf = findLeaf(leaf, protein.point);
 	setLeafProtein(new_leaf, protein);
+        
+        new_leaf = findLeaf(leaf, new_protein.point);
+	setLeafProtein(new_leaf, new_protein);
+        
     }
 }
 
@@ -258,8 +205,8 @@ int main(int argc, char** argv) {
 
     root = (Leaf *) malloc(sizeof (Leaf));
     root->is_leaf = 1;
-    root->protein.isSet = 0;
-    
+    root->protein.point[0] = MAX;
+
     // armazena o valor da aresta do cubo em volta de cada ligante
     fgets(str, sizeof (str), stdin);
     sscanf(str, " %lf", &cubeLig_edge);
