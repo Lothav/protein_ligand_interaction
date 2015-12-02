@@ -18,7 +18,17 @@ typedef struct prot_st {
     //  - point[1] = y
     //  - point[2] = z
     double point[3];
+    int isSet;
 } Protein;
+
+typedef struct lig_st {
+    // point[] refere-se à cordenada do Ligante:
+    // Sendo:
+    //  - point[0] = x
+    //  - point[1] = y
+    //  - point[2] = z
+    double point[3];
+} Ligante;
 
 typedef struct cube_str {
     // max/min referem-se às cordenadas de um certo cubo:
@@ -60,7 +70,7 @@ void setCubeCoords(Leaf *leaf) {
     sscanf(str, " %lf %lf %lf", &leaf->coords.max[0], &leaf->coords.max[1], &leaf->coords.max[2]);
 }
 
-Protein getNewProtein(Leaf *leaf, char* str) {
+Protein getNewProtein(char* str) {
 
     Protein new_prot;
     char aux[MAX];
@@ -71,7 +81,22 @@ Protein getNewProtein(Leaf *leaf, char* str) {
     sscanf(str, " %s %s %lf %lf %lf", aux, aux, &new_prot.point[0], &new_prot.point[1], &new_prot.point[2]);
     // retorna a nova proteína para que seja
     // inserida na árvore.
+    new_prot.isSet = 1;
     return new_prot;
+}
+
+Ligante getNewLigante(char* str) {
+
+    Ligante new_lig;
+    char aux[MAX];
+
+    // armazena os pontos do ligante
+    // (o aux é apenas para ignorar os nomes
+    // tenho sérios problemas com regex)
+    sscanf(str, " %s %s %lf %lf %lf", aux, aux, &new_lig.point[0], &new_lig.point[1], &new_lig.point[2]);
+    // retorna o novo ligante para que seja
+    // comparado na árvore.
+    return new_lig;
 }
 
 Leaf* findLeaf(Leaf* root, double* point) {
@@ -145,14 +170,14 @@ void splitCubes(Leaf* leaf, double* half_edge) {
         leaf->sons[c] = (Leaf *) malloc(sizeof (Leaf));
         leaf->sons[c]->coords = lower;  
         leaf->sons[c]->is_leaf = 1;
-        leaf->sons[c]->protein.point[0] = MAX;
+	leaf->sons[c]->protein.isSet = 0;
     }
     
     for(c = 4; c < 8; c++){
         leaf->sons[c] = (Leaf *) malloc(sizeof (Leaf));
         leaf->sons[c]->coords = upper;  
         leaf->sons[c]->is_leaf = 1;
-        leaf->sons[c]->protein.point[0] = MAX;
+	leaf->sons[c]->protein.isSet = 0;
     }
     
     
@@ -174,24 +199,39 @@ void setLeafProtein(Leaf* leaf, Protein new_protein) {
     Protein protein, pro_aux;
     Leaf *new_leaf;
 
-    if (leaf->protein.point[0] == MAX) {
+    // se a proteína da folha escolhida não esta setada
+    // e é uma folha (não é um nó)
+    if (!leaf->protein.isSet && leaf->is_leaf) {
 	leaf->protein = new_protein;
+	leaf->protein.isSet = 1;
     } else {
-
+	// senão transforma a folha em nó :
+	
 	half_edge[0] = (leaf->coords.max[0] - leaf->coords.min[0]) / 2;
 	half_edge[1] = (leaf->coords.max[1] - leaf->coords.min[1]) / 2;
 	half_edge[2] = (leaf->coords.max[2] - leaf->coords.min[2]) / 2;
 
+	// guarda a proteína que está na folha
+	// para 'descermos' com ela após ramificar-mos
+	// os filhos.
 	protein = leaf->protein;
+	// fala que a folha agora é um nó.
         leaf->is_leaf = 0;
+	// diz que a proteína da folha não está setada
+	leaf->protein.isSet = 0;
+	
+	//divide a folha em sub-folhas
+	// 'sons[]':
 	splitCubes(leaf, half_edge);
         
+	// 'desce' com a folha guardada para um
+	// dos filhos criados.
 	new_leaf = findLeaf(leaf, protein.point);
 	setLeafProtein(new_leaf, protein);
         
+	// insere a nova folha.
         new_leaf = findLeaf(leaf, new_protein.point);
 	setLeafProtein(new_leaf, new_protein);
-        
     }
 }
 
@@ -202,9 +242,11 @@ int main(int argc, char** argv) {
     Leaf *root, *leaf;
     int a;
     Protein new_protein;
+    Ligante new_ligante;
 
     root = (Leaf *) malloc(sizeof (Leaf));
     root->is_leaf = 1;
+    root->protein.isSet = 0;
     root->protein.point[0] = MAX;
 
     // armazena o valor da aresta do cubo em volta de cada ligante
@@ -225,18 +267,33 @@ int main(int argc, char** argv) {
 	setCubeCoords(root);
 
 	fgets(str, sizeof (str), stdin);
-	while (str[0] != 'N') {
-
+	while (str[0] == 'P') {
 	    // cria uma nova proteína:
 	    //  - aloca espaço para ela
 	    //  - recebe as coordenadas do stdin
-	    new_protein = getNewProtein(root, str);
+	    new_protein = getNewProtein(str);
 	    // percorre a raiz e encontra a folha
 	    // referente às coordenadas da nova proteína.
 	    leaf = findLeaf(root, new_protein.point);
 
+	    // função recursiva que insere a proteína
+	    // na folha escolhida.
 	    setLeafProtein(leaf, new_protein);
 	    fgets(str, sizeof (str), stdin);
+	}
+	
+	while(str[0] == 'L'){
+	    // agora recebemos os ligantes:
+	    
+	    new_ligante = getNewLigante(str);
+	    // precisamos então encontrar a folha/proteína
+	    // na qual o ligante está mais próximo
+	    leaf = findLeaf(leaf, new_ligante.point);
+	    // agora que temos a folha
+	    
+	    
+	    
+	    
 	}
     }
     return (EXIT_SUCCESS);
