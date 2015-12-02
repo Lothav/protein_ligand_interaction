@@ -125,10 +125,9 @@ Leaf* findLeaf(Leaf* root, double* point) {
 		point[2] >= aux->sons[c]->coords.min[2] ) {
 
 	    if (aux->sons[c]->is_leaf) return aux->sons[c];
-	    else findLeaf(aux->sons[c], point);
+	    else return findLeaf(aux->sons[c], point);
 	}
     }
-    printf("\nnão encontrado\n");
 }
 
 /*
@@ -191,7 +190,7 @@ void splitCubes(Leaf* leaf, double* half_edge) {
 void setLeafProtein(Leaf* leaf, Protein new_protein) {
 
     double half_edge[3];
-    Protein protein, pro_aux;
+    Protein protein;
     Leaf *new_leaf, *old_leaf;
 
     // se a proteína da folha escolhida não esta setada
@@ -247,29 +246,25 @@ void getPointsInsideBox(Leaf* leaf, Ligante lig, double cubeLig_edge, int *sum){
 
     if(leaf->is_leaf){
         if(leaf->protein.isSet){
-            if(leaf->coords.min[0] < lig_max.min[0] || 
-               leaf->coords.min[1] < lig_max.min[1] ||
-               leaf->coords.min[2] < lig_max.min[2] )
-                return;
-            if(leaf->coords.max[0] > lig_max.max[0] || 
-               leaf->coords.max[1] > lig_max.max[1] ||
-               leaf->coords.max[2] > lig_max.max[2] )
-                return;
-            (*sum)++;
+            if(leaf->coords.min[0] > lig_max.min[0] && 
+               leaf->coords.min[1] > lig_max.min[1] &&
+               leaf->coords.min[2] > lig_max.min[2] &&
+                    
+               leaf->coords.max[0] < lig_max.max[0] && 
+               leaf->coords.max[1] < lig_max.max[1] &&
+               leaf->coords.max[2] < lig_max.max[2] )
+                (*sum)++;
         }
     } else {
         for (a = 0; a < 8; a++) {
-            if (leaf->sons[a]->coords.min[0] < lig_max.min[a] || 
-                leaf->sons[a]->coords.min[1] < lig_max.min[a] || 
-                leaf->sons[a]->coords.min[2] < lig_max.min[a])
-                continue;
-            
-            if (leaf->sons[a]->coords.max[0] > lig_max.max[a] ||
-                leaf->sons[a]->coords.max[1] > lig_max.max[a] || 
-                leaf->sons[a]->coords.max[2] > lig_max.max[a])
-                continue;
-            
-            getPointsInsideBox(leaf->sons[a], lig, cubeLig_edge, sum);
+            if (leaf->sons[a]->coords.min[0] > lig_max.min[a] && 
+                leaf->sons[a]->coords.min[1] > lig_max.min[a] && 
+                leaf->sons[a]->coords.min[2] > lig_max.min[a] &&
+                    
+                leaf->sons[a]->coords.max[0] < lig_max.max[a] &&
+                leaf->sons[a]->coords.max[1] < lig_max.max[a] && 
+                leaf->sons[a]->coords.max[2] < lig_max.max[a])
+                    getPointsInsideBox(leaf->sons[a], lig, cubeLig_edge, sum);
         }
     }
 }
@@ -277,9 +272,9 @@ void getPointsInsideBox(Leaf* leaf, Ligante lig, double cubeLig_edge, int *sum){
 int main(int argc, char** argv) {
 
     double cubeLig_edge;
-    char str[MAX], lig_name[MAX], aux[11], type[30];
+    char str[MAX], lig_name[MAX], aux[11];
     Leaf *root, *leaf;
-    int a, *sum;
+    int sum, *p_sum;
     Protein new_protein;
     Ligante new_ligante;
 
@@ -295,6 +290,10 @@ int main(int argc, char** argv) {
     // não receber -1 faz:
     while (aux[0] != '-' && aux[1] != '1') {
 
+        sum = 0;
+        p_sum = &sum;
+        
+        
 	// recebe o nome do ligante e o armazena em
 	// 'lig_name'.
 	fgets(str, sizeof (str), stdin);
@@ -321,15 +320,13 @@ int main(int argc, char** argv) {
 	}
 	
 	while(str[0] == 'L'){
-            
-            
-            (*sum) = 0;
+
 	    // agora recebemos os ligantes:
 	    new_ligante = getNewLigante(str);
-	    getPointsInsideBox(root, new_ligante, cubeLig_edge, sum);
+	    getPointsInsideBox(root, new_ligante, cubeLig_edge, p_sum);
             
-            printf("\n\n Valor de ligante => %i !\n", (*sum));
-            
+            printf("\n\n Valor de ligante => %i !\n", sum);
+            fgets(str, sizeof (str), stdin);
 	}
         
         printf("cabo");
