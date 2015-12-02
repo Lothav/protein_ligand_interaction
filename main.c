@@ -277,27 +277,22 @@ int main(int argc, char** argv) {
     Protein new_protein;
     Ligante new_ligante;
 
-    root = (Leaf *) malloc(sizeof (Leaf));
-    root->is_leaf = 1;
-    root->protein.isSet = 0;
-
     // armazena o valor da aresta do cubo em volta de cada ligante
     fgets(str, sizeof (str), stdin);
     sscanf(str, " %lf", &cubeLig_edge);
 
-    // enquanto a linha 'Nome: nome_lig' 
-    // não receber -1 faz:
+        
+    fgets(str, sizeof (str), stdin);
+    sscanf(str, " %s %s", aux, lig_name);
+    
     while (aux[0] != '-' && aux[1] != '1') {
 
+        root = (Leaf *) malloc(sizeof (Leaf));
+        root->is_leaf = 1;
+        root->protein.isSet = 0;
+        
         sum = 0;
         p_sum = &sum;
-        
-        
-	// recebe o nome do ligante e o armazena em
-	// 'lig_name'.
-	fgets(str, sizeof (str), stdin);
-	sscanf(str, " %s %s", aux, lig_name);
-
 	// lê e insere no cubo alocado as coordenadas
 	// de seus pontos extremos na raiz.
 	setCubeCoords(root);
@@ -324,12 +319,13 @@ int main(int argc, char** argv) {
 	    new_ligante = getNewLigante(str);
 	    getPointsInsideBox(root, new_ligante, cubeLig_edge, p_sum);
             
-            printf("\n\n Valor de ligante => %i !\n", sum);
             fgets(str, sizeof (str), stdin);
 	}
+        free(root);
+        free(leaf);
+        printf("%s: %d", lig_name, sum);
         
-        printf("cabo");
-        
+        sscanf(str, " %s %s", aux, lig_name);     
     }
     return (EXIT_SUCCESS);
 }
