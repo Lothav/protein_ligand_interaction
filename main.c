@@ -116,18 +116,19 @@ Leaf* findLeaf(Leaf* root, double* point) {
     aux = root;
     for (c = 0; c < 8; c++) {
 	if (aux->sons[c] != NULL &&
-		point[0] < aux->sons[c]->coords.max[0] &&
-		point[1] < aux->sons[c]->coords.max[1] &&
-		point[2] < aux->sons[c]->coords.max[2] &&
+		point[0] <= aux->sons[c]->coords.max[0] &&
+		point[1] <= aux->sons[c]->coords.max[1] &&
+		point[2] <= aux->sons[c]->coords.max[2] &&
 		
-		point[0] > aux->sons[c]->coords.min[0] &&
-		point[1] > aux->sons[c]->coords.min[1] &&
-		point[2] > aux->sons[c]->coords.min[2] ) {
+		point[0] >= aux->sons[c]->coords.min[0] &&
+		point[1] >= aux->sons[c]->coords.min[1] &&
+		point[2] >= aux->sons[c]->coords.min[2] ) {
 
 	    if (aux->sons[c]->is_leaf) return aux->sons[c];
 	    else findLeaf(aux->sons[c], point);
 	}
     }
+    printf("\nnão encontrado\n");
 }
 
 /*
@@ -147,22 +148,17 @@ Leaf* findLeaf(Leaf* root, double* point) {
 
 void splitCubes(Leaf* leaf, double* half_edge) {
 
+    // auxiliar
     int c;
     Cube lower, upper;
    
-    lower.min[0] = leaf->coords.min[0];
-    lower.min[1] = leaf->coords.min[1];
-    lower.min[2] = leaf->coords.min[2];
-    lower.max[0] = leaf->coords.max[0] - half_edge[0];
-    lower.max[1] = leaf->coords.max[1] - half_edge[1];
-    lower.max[2] = leaf->coords.max[2] - half_edge[2];
-    
-    upper.max[0] = leaf->coords.max[0];
-    upper.max[1] = leaf->coords.max[1];
-    upper.max[2] = leaf->coords.max[2];
-    upper.min[0] = leaf->coords.min[0] + half_edge[0];
-    upper.min[1] = leaf->coords.min[1] + half_edge[1];
-    upper.min[2] = leaf->coords.min[2] + half_edge[2];
+    for(c = 0; c < 3; c++){
+        lower.min[c] = leaf->coords.min[c];
+        lower.max[c] = leaf->coords.max[c] - half_edge[c];
+        
+        upper.max[c] = leaf->coords.max[c];
+        upper.min[c] = leaf->coords.min[c] + half_edge[c];
+    }
     
     // Aloca memória para todos os filhos da folha
     // e transforma ela em um NÓ.
@@ -179,7 +175,6 @@ void splitCubes(Leaf* leaf, double* half_edge) {
         leaf->sons[c]->is_leaf = 1;
 	leaf->sons[c]->protein.isSet = 0;
     }
-    
     
     for(c = 0; c < 4; c++){
         leaf->sons[c+1]->coords.max[c] += half_edge[c];
@@ -223,7 +218,6 @@ void setLeafProtein(Leaf* leaf, Protein new_protein) {
 	//divide a folha em sub-folhas
 	// 'sons[]':
         if(leaf->sons[0] == NULL){
-       
             splitCubes(leaf, half_edge);
         }
         
@@ -274,6 +268,7 @@ void getPointsInsideBox(Leaf* leaf, Ligante lig, double cubeLig_edge, int *sum){
                 leaf->sons[a]->coords.max[1] > lig_max.max[a] || 
                 leaf->sons[a]->coords.max[2] > lig_max.max[a])
                 continue;
+            
             getPointsInsideBox(leaf->sons[a], lig, cubeLig_edge, sum);
         }
     }
@@ -291,7 +286,6 @@ int main(int argc, char** argv) {
     root = (Leaf *) malloc(sizeof (Leaf));
     root->is_leaf = 1;
     root->protein.isSet = 0;
-    root->protein.point[0] = MAX;
 
     // armazena o valor da aresta do cubo em volta de cada ligante
     fgets(str, sizeof (str), stdin);
