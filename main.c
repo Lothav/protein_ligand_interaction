@@ -159,7 +159,7 @@ void splitCubes(Leaf* leaf, double* half_edge) {
     
     upper.max[0] = leaf->coords.max[0];
     upper.max[1] = leaf->coords.max[1];
-    upper.max[2] = leaf->coords.max[2]; 
+    upper.max[2] = leaf->coords.max[2];
     upper.min[0] = leaf->coords.min[0] + half_edge[0];
     upper.min[1] = leaf->coords.min[1] + half_edge[1];
     upper.min[2] = leaf->coords.min[2] + half_edge[2];
@@ -168,7 +168,7 @@ void splitCubes(Leaf* leaf, double* half_edge) {
     // e transforma ela em um NÓ.
     for(c = 0; c < 4; c++){
         leaf->sons[c] = (Leaf *) malloc(sizeof (Leaf));
-        leaf->sons[c]->coords = lower;  
+        leaf->sons[c]->coords = lower;
         leaf->sons[c]->is_leaf = 1;
 	leaf->sons[c]->protein.isSet = 0;
     }
@@ -197,7 +197,7 @@ void setLeafProtein(Leaf* leaf, Protein new_protein) {
 
     double half_edge[3];
     Protein protein, pro_aux;
-    Leaf *new_leaf;
+    Leaf *new_leaf, *old_leaf;
 
     // se a proteína da folha escolhida não esta setada
     // e é uma folha (não é um nó)
@@ -222,7 +222,10 @@ void setLeafProtein(Leaf* leaf, Protein new_protein) {
 	
 	//divide a folha em sub-folhas
 	// 'sons[]':
-	splitCubes(leaf, half_edge);
+        if(leaf->sons[0] == NULL){
+       
+            splitCubes(leaf, half_edge);
+        }
         
 	// 'desce' com a folha guardada para um
 	// dos filhos criados.
@@ -230,8 +233,49 @@ void setLeafProtein(Leaf* leaf, Protein new_protein) {
 	setLeafProtein(new_leaf, protein);
         
 	// insere a nova folha.
-        new_leaf = findLeaf(leaf, new_protein.point);
-	setLeafProtein(new_leaf, new_protein);
+        old_leaf = findLeaf(leaf, new_protein.point);
+	setLeafProtein(old_leaf, new_protein);
+    }
+}
+
+
+void getPointsInsideBox(Leaf* leaf, Ligante lig, double cubeLig_edge, int *sum){
+    
+    // auxiliar
+    int a;
+    Cube lig_max;
+    Cube lig_min;
+    
+    for(a = 0; a < 4; a++){
+        lig_max.max[a] = lig.point[a] + cubeLig_edge/2;
+        lig_min.min[a] = lig.point[a] - cubeLig_edge/2;
+    }
+
+    if(leaf->is_leaf){
+        if(leaf->protein.isSet){
+            if(leaf->coords.min[0] < lig_max.min[0] || 
+               leaf->coords.min[1] < lig_max.min[1] ||
+               leaf->coords.min[2] < lig_max.min[2] )
+                return;
+            if(leaf->coords.max[0] > lig_max.max[0] || 
+               leaf->coords.max[1] > lig_max.max[1] ||
+               leaf->coords.max[2] > lig_max.max[2] )
+                return;
+            (*sum)++;
+        }
+    } else {
+        for (a = 0; a < 8; a++) {
+            if (leaf->sons[a]->coords.min[0] < lig_max.min[a] || 
+                leaf->sons[a]->coords.min[1] < lig_max.min[a] || 
+                leaf->sons[a]->coords.min[2] < lig_max.min[a])
+                continue;
+            
+            if (leaf->sons[a]->coords.max[0] > lig_max.max[a] ||
+                leaf->sons[a]->coords.max[1] > lig_max.max[a] || 
+                leaf->sons[a]->coords.max[2] > lig_max.max[a])
+                continue;
+            getPointsInsideBox(leaf->sons[a], lig, cubeLig_edge, sum);
+        }
     }
 }
 
@@ -240,7 +284,7 @@ int main(int argc, char** argv) {
     double cubeLig_edge;
     char str[MAX], lig_name[MAX], aux[11], type[30];
     Leaf *root, *leaf;
-    int a;
+    int a, *sum;
     Protein new_protein;
     Ligante new_ligante;
 
@@ -283,18 +327,19 @@ int main(int argc, char** argv) {
 	}
 	
 	while(str[0] == 'L'){
+            
+            
+            (*sum) = 0;
 	    // agora recebemos os ligantes:
-	    
 	    new_ligante = getNewLigante(str);
-	    // precisamos então encontrar a folha/proteína
-	    // na qual o ligante está mais próximo
-	    leaf = findLeaf(leaf, new_ligante.point);
-	    // agora que temos a folha
-	    
-	    
-	    
-	    
+	    getPointsInsideBox(root, new_ligante, cubeLig_edge, sum);
+            
+            printf("\n\n Valor de ligante => %i !\n", (*sum));
+            
 	}
+        
+        printf("cabo");
+        
     }
     return (EXIT_SUCCESS);
 }

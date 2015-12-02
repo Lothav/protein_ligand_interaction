@@ -24,7 +24,7 @@ CLEAN_SUBPROJECTS=${CLEAN_SUBPROJECTS_${SUBPROJECTS}}
 
 
 # Project Name
-PROJECTNAME=ligprot
+PROJECTNAME=interacao_ligante_proteina
 
 # Active Configuration
 DEFAULTCONF=Debug
