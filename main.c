@@ -89,7 +89,7 @@ Ligante getNewLigante(char* str) {
 
     Ligante new_lig;
     char aux[MAX];
-
+    
     // armazena os pontos do ligante
     // (o aux é apenas para ignorar os nomes
     // tenho sérios problemas com regex)
@@ -147,7 +147,7 @@ Leaf* findLeaf(Leaf* root, double* point) {
 void splitCubes(Leaf* leaf, double half_edge[]) {
 
     // auxiliar
-    int c;
+    int c,a;
     Cube lower, upper;
 
     for (c = 0; c < 3; c++) {
@@ -165,6 +165,9 @@ void splitCubes(Leaf* leaf, double half_edge[]) {
 	leaf->sons[c]->coords = lower;
 	leaf->sons[c]->is_leaf = 1;
 	leaf->sons[c]->protein.isSet = 0;
+        for(a = 0; a< 8; a++){
+            leaf->sons[c]->sons[a] = NULL;
+        }
     }
 
     for (c = 4; c < 8; c++) {
@@ -172,6 +175,9 @@ void splitCubes(Leaf* leaf, double half_edge[]) {
 	leaf->sons[c]->coords = upper;
 	leaf->sons[c]->is_leaf = 1;
 	leaf->sons[c]->protein.isSet = 0;
+        for(a = 0; a < 8; a++){
+            leaf->sons[c]->sons[a] = NULL;
+        }
     }
 
     for (c = 0; c < 4; c++) {
@@ -200,9 +206,9 @@ void setLeafProtein(Leaf* leaf, Protein new_protein) {
     } else {
 	// senão transforma a folha em nó :
 
-	half_edge[0] = (leaf->coords.max[0] - leaf->coords.min[0]) / 2;
-	half_edge[1] = (leaf->coords.max[1] - leaf->coords.min[1]) / 2;
-	half_edge[2] = (leaf->coords.max[2] - leaf->coords.min[2]) / 2;
+	half_edge[0] = abs(leaf->coords.max[0] - leaf->coords.min[0]) / 2;
+	half_edge[1] = abs(leaf->coords.max[1] - leaf->coords.min[1]) / 2;
+	half_edge[2] = abs(leaf->coords.max[2] - leaf->coords.min[2]) / 2;
 
 	// guarda a proteína que está na folha
 	// para 'descermos' com ela após ramificar-mos
@@ -225,15 +231,17 @@ void setLeafProtein(Leaf* leaf, Protein new_protein) {
 	old_leaf = findLeaf(leaf, new_protein.point);
 
 	while (new_leaf == old_leaf) {
-	    half_edge[0] = (new_leaf->coords.max[0] - new_leaf->coords.min[0]) / 2;
-	    half_edge[1] = (new_leaf->coords.max[1] - new_leaf->coords.min[1]) / 2;
-	    half_edge[2] = (new_leaf->coords.max[2] - new_leaf->coords.min[2]) / 2;
-	    	    
-	    splitCubes(new_leaf, half_edge);
-	    new_leaf->is_leaf = 0;
-
-	    old_leaf = findLeaf(new_leaf, new_protein.point);
-	    new_leaf = findLeaf(new_leaf, protein.point);
+	    half_edge[0] = abs(new_leaf->coords.max[0] - new_leaf->coords.min[0]) / 2;
+	    half_edge[1] = abs(new_leaf->coords.max[1] - new_leaf->coords.min[1]) / 2;
+	    half_edge[2] = abs(new_leaf->coords.max[2] - new_leaf->coords.min[2]) / 2;
+            
+            printf("%lf , %lf, %lf\n", half_edge[0],half_edge[1],half_edge[2]);
+            if (new_leaf->is_leaf) {
+                splitCubes(new_leaf, half_edge);
+                new_leaf->is_leaf = 0;
+                old_leaf = findLeaf(new_leaf, new_protein.point);
+                new_leaf = findLeaf(new_leaf, protein.point);
+            }
 	}
 
 	setLeafProtein(new_leaf, protein);
@@ -265,14 +273,15 @@ void getPointsInsideBox(Leaf* leaf, Ligante lig, double cubeLig_edge, int *sum) 
 	}
     } else {
 	for (a = 0; a < 8; a++) {
-	    if (    leaf->sons[a]->coords.max[0] > lig_cube.min[0] &&
-		    leaf->sons[a]->coords.max[1] > lig_cube.min[1] &&
-		    leaf->sons[a]->coords.max[2] > lig_cube.min[2] &&
+	    if (    leaf->sons[a]->coords.max[0] < lig_cube.min[0] ||
+		    leaf->sons[a]->coords.max[1] < lig_cube.min[1] ||
+		    leaf->sons[a]->coords.max[2] < lig_cube.min[2] ||
 
-		    leaf->sons[a]->coords.min[0] < lig_cube.max[0] &&
-		    leaf->sons[a]->coords.min[1] < lig_cube.max[1] &&
-		    leaf->sons[a]->coords.min[2] < lig_cube.max[2]
-		    )
+		    leaf->sons[a]->coords.min[0] > lig_cube.max[0] ||
+		    leaf->sons[a]->coords.min[1] > lig_cube.max[1] ||
+		    leaf->sons[a]->coords.min[2] > lig_cube.max[2]
+		    )continue;
+            else
 		getPointsInsideBox(leaf->sons[a], lig, cubeLig_edge, sum);
 	}
     }
@@ -283,7 +292,7 @@ int main(int argc, char** argv) {
     double cubeLig_edge;
     char str[MAX], lig_name[MAX], aux[11];
     Leaf *root, *leaf;
-    int sum, *p_sum;
+    int sum, *p_sum, a;
     Protein new_protein;
     Ligante new_ligante;
 
@@ -300,6 +309,10 @@ int main(int argc, char** argv) {
 	root = (Leaf *) malloc(sizeof (Leaf)*2);
 	root->is_leaf = 1;
 	root->protein.isSet = 0;
+        
+        for(a = 0; a< 8; a++){
+            root->sons[a] = NULL;
+        }
 
 	sum = 0;
 	p_sum = &sum;
@@ -332,7 +345,6 @@ int main(int argc, char** argv) {
 	    fgets(str, sizeof (str), stdin);
 	}
 	free(root);
-	free(leaf);
 	printf("%s: %d\n", lig_name, sum);
 
 	sscanf(str, " %s %s", aux, lig_name);
