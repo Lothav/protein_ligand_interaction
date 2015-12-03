@@ -254,7 +254,7 @@ void getPointsInsideBox(Leaf* leaf, Ligante lig, double cubeLig_edge, int *sum) 
 
     if (leaf->is_leaf) {
 	if (leaf->protein.isSet) {
-	    if (leaf->protein.point[0] > lig_cube.min[0] &&
+	    if (    leaf->protein.point[0] > lig_cube.min[0] &&
 		    leaf->protein.point[1] > lig_cube.min[1] &&
 		    leaf->protein.point[2] > lig_cube.min[2] &&
 
@@ -265,24 +265,13 @@ void getPointsInsideBox(Leaf* leaf, Ligante lig, double cubeLig_edge, int *sum) 
 	}
     } else {
 	for (a = 0; a < 8; a++) {
-	    if ((leaf->sons[a]->coords.min[0] > lig_cube.min[0] &&
-		    leaf->sons[a]->coords.min[1] > lig_cube.min[1] &&
-		    leaf->sons[a]->coords.min[2] > lig_cube.min[2] &&
+	    if (    leaf->sons[a]->coords.max[0] > lig_cube.min[0] &&
+		    leaf->sons[a]->coords.max[1] > lig_cube.min[1] &&
+		    leaf->sons[a]->coords.max[2] > lig_cube.min[2] &&
 
-		    leaf->sons[a]->coords.max[0] < lig_cube.max[0] &&
-		    leaf->sons[a]->coords.max[1] < lig_cube.max[1] &&
-		    leaf->sons[a]->coords.max[2] < lig_cube.max[2])||
-		
-		    (leaf->sons[a]->coords.min[0] < lig_cube.min[0] &&
-		    leaf->sons[a]->coords.min[1] < lig_cube.min[1] &&
-		    leaf->sons[a]->coords.min[2] < lig_cube.min[2] &&
-
-		    leaf->sons[a]->coords.max[0] > lig_cube.max[0] &&
-		    leaf->sons[a]->coords.max[1] > lig_cube.max[1] &&
-		    leaf->sons[a]->coords.max[2] > lig_cube.max[2])
-		
-		    
-		    
+		    leaf->sons[a]->coords.min[0] < lig_cube.max[0] &&
+		    leaf->sons[a]->coords.min[1] < lig_cube.max[1] &&
+		    leaf->sons[a]->coords.min[2] < lig_cube.max[2]
 		    )
 		getPointsInsideBox(leaf->sons[a], lig, cubeLig_edge, sum);
 	}

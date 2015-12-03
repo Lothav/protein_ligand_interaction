@@ -9,19 +9,19 @@ CND_DISTDIR=dist
 # Debug configuration
 CND_PLATFORM_Debug=GNU-Linux
 CND_ARTIFACT_DIR_Debug=dist/Debug/GNU-Linux
-CND_ARTIFACT_NAME_Debug=ligprot
-CND_ARTIFACT_PATH_Debug=dist/Debug/GNU-Linux/ligprot
+CND_ARTIFACT_NAME_Debug=interacao_ligante_proteina
+CND_ARTIFACT_PATH_Debug=dist/Debug/GNU-Linux/interacao_ligante_proteina
 CND_PACKAGE_DIR_Debug=dist/Debug/GNU-Linux/package
-CND_PACKAGE_NAME_Debug=ligprot.tar
-CND_PACKAGE_PATH_Debug=dist/Debug/GNU-Linux/package/ligprot.tar
+CND_PACKAGE_NAME_Debug=interacaoliganteproteina.tar
+CND_PACKAGE_PATH_Debug=dist/Debug/GNU-Linux/package/interacaoliganteproteina.tar
 # Release configuration
 CND_PLATFORM_Release=GNU-Linux
 CND_ARTIFACT_DIR_Release=dist/Release/GNU-Linux
-CND_ARTIFACT_NAME_Release=ligprot
-CND_ARTIFACT_PATH_Release=dist/Release/GNU-Linux/ligprot
+CND_ARTIFACT_NAME_Release=interacao_ligante_proteina
+CND_ARTIFACT_PATH_Release=dist/Release/GNU-Linux/interacao_ligante_proteina
 CND_PACKAGE_DIR_Release=dist/Release/GNU-Linux/package
-CND_PACKAGE_NAME_Release=ligprot.tar
-CND_PACKAGE_PATH_Release=dist/Release/GNU-Linux/package/ligprot.tar
+CND_PACKAGE_NAME_Release=interacaoliganteproteina.tar
+CND_PACKAGE_PATH_Release=dist/Release/GNU-Linux/package/interacaoliganteproteina.tar
 #
 # include compiler specific variables
 #
