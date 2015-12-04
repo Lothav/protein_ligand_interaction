@@ -4,6 +4,12 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <itemPath>cube.h</itemPath>
+      <itemPath>cubes.h</itemPath>
+      <itemPath>leaf.h</itemPath>
+      <itemPath>ligante.h</itemPath>
+      <itemPath>protein.h</itemPath>
+      <itemPath>utils.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ResourceFiles"
                    displayName="Resource Files"
@@ -12,6 +18,11 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <itemPath>cube.c</itemPath>
+      <itemPath>leaf.c</itemPath>
+      <itemPath>ligante.c</itemPath>
+      <itemPath>protein.c</itemPath>
+      <itemPath>utils.c</itemPath>
     </logicalFolder>
     <logicalFolder name="TestFiles"
                    displayName="Test Files"
@@ -36,7 +47,29 @@
       </toolsSet>
       <compileType>
       </compileType>
+      <item path="cube.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="cube.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="cubes.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="leaf.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="leaf.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="ligante.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="ligante.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="protein.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="protein.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utils.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="utils.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
     <conf name="Release" type="1">
@@ -59,7 +92,29 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="cube.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="cube.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="cubes.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="leaf.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="leaf.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="ligante.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="ligante.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="main.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="protein.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="protein.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="utils.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="utils.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
   </confs>
