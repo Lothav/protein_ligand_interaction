@@ -161,8 +161,56 @@ void splitCubes(Leaf* leaf, double half_edge[]) {
 
     // auxiliar
     int c,a;
+    
+    // Transformar a Folha em Nó :
+    
     Cube lower, upper;
-
+    /*
+	Percebi que a partir do cubo extremo de cima
+	podemos chegar nos 3 vizinhos(valor max e min) dele 
+	variando o x,y,z um de cada vez.
+     
+	Chamei ele de 'uper';
+ 
+     
+             *------------*
+	    /     ///////||
+	  / - - / - - /||||
+	/     /     / |||||
+      *-----------*   | / |
+      |     |     |   |   /
+      |     |     | / |   *
+      | - - - - - |   | /
+      |     |     |   /
+      |     |     | /
+      *-----------*
+     
+      
+     
+	Mesma coisa para o extremo de baixo
+	Chamei ele de 'lower';
+ 
+     
+             *------------*
+	    /     /    /  |
+	  / - - / - - /   |
+	/     /     / |   |
+      *-----------*   | / |
+      |     |     |   |   /
+      |     |     | / |   *
+      | - - - - - |   | /
+      |||||||     |   /
+      |||||||     | /
+      *-----------*
+}*/
+    
+    // Vamos à lógica:
+    
+    
+    // half_edge é metade da aresta do cubo naquela
+    // posição (x/y/z.
+    // Com isso temos as coordenadas max e min de
+    // lower e upper. (note que upper.min == lower.max)
     for (c = 0; c < 3; c++) {
 	lower.min[c] = leaf->coords.min[c];
 	lower.max[c] = leaf->coords.max[c] - half_edge[c];
@@ -174,7 +222,10 @@ void splitCubes(Leaf* leaf, double half_edge[]) {
     // Aloca memória para todos os filhos da folha
     // e transforma ela em um NÓ.
     for (c = 0; c < 4; c++) {
+	leaf->sons[c] = NULL;
 	leaf->sons[c] = (Leaf *) malloc(sizeof (Leaf)*2);
+	// Seta todos os cubos que serão vizinhos de lower
+	// com suas coordenadas.
 	leaf->sons[c]->coords = lower;
 	leaf->sons[c]->is_leaf = 1;
 	leaf->sons[c]->protein.isSet = 0;
@@ -184,7 +235,10 @@ void splitCubes(Leaf* leaf, double half_edge[]) {
     }
 
     for (c = 4; c < 8; c++) {
+	leaf->sons[c] = NULL;
 	leaf->sons[c] = (Leaf *) malloc(sizeof (Leaf)*2);
+	// Seta todos os cubos que serão vizinhos de upper
+	// com suas coordenadas.
 	leaf->sons[c]->coords = upper;
 	leaf->sons[c]->is_leaf = 1;
 	leaf->sons[c]->protein.isSet = 0;
@@ -193,15 +247,31 @@ void splitCubes(Leaf* leaf, double half_edge[]) {
         }
     }
 
+    
+    // Então variando uma coordenada(x || y || z) de
+    // max e min por filho temos o max e min dos cubos
+    // adjacentes à lower e upper.
+    
+    //lembrando que [0] = X , [1] = Y , [2] = Z
     for (c = 0; c < 4; c++) {
 	leaf->sons[c + 1]->coords.max[c] += half_edge[c];
 	leaf->sons[c + 1]->coords.min[c] += half_edge[c];
     }
-
     for (c = 0; c < 4; c++) {
 	leaf->sons[c + 4]->coords.max[c] -= half_edge[c];
 	leaf->sons[c + 4]->coords.min[c] -= half_edge[c];
     }
+}
+
+void freeTree(Leaf *root) {
+    int a;
+    // Função recursiva que limpa toda a árvore filho por filho.
+    for (a = 0; a < 8; a++) {
+        if (root->sons[a] != NULL) {
+            freeTree(root->sons[a]);
+        }
+    }
+    free(root);
 }
 
 void setLeafProtein(Leaf* leaf, Protein new_protein) {
@@ -209,19 +279,22 @@ void setLeafProtein(Leaf* leaf, Protein new_protein) {
     double half_edge[3];
     Protein protein;
     Leaf *new_leaf, *old_leaf;
+    int a;
 
     // se a proteína da folha escolhida não esta setada
     // e é uma folha (não é um nó)
-
+    
+    
+    old_leaf = NULL;
+    new_leaf = NULL; 
     if (!leaf->protein.isSet && leaf->is_leaf) {
 	leaf->protein = new_protein;
 	leaf->protein.isSet = 1;
     } else {
 	// senão transforma a folha em nó :
 
-	half_edge[0] = fabs(leaf->coords.max[0] - leaf->coords.min[0]) / 2;
-	half_edge[1] = fabs(leaf->coords.max[1] - leaf->coords.min[1]) / 2;
-	half_edge[2] = fabs(leaf->coords.max[2] - leaf->coords.min[2]) / 2;
+	// calcula a metade do comprimento em x, y, z da aresta do cubo
+	for(a = 0; a< 3; a++) half_edge[a] = fabs(leaf->coords.max[a] - leaf->coords.min[a]) / 2;
 
 	// guarda a proteína que está na folha
 	// para 'descermos' com ela após ramificar-mos
@@ -243,20 +316,26 @@ void setLeafProtein(Leaf* leaf, Protein new_protein) {
 	new_leaf = findLeaf(leaf, protein.point);
 	old_leaf = findLeaf(leaf, new_protein.point);
 
+	
+	// caso ambas às proteínas encontrem a mesma folha
+	// deve-se ramificá-las mais uma vez:
 	while (new_leaf == old_leaf) {
-	    half_edge[0] = fabs(new_leaf->coords.max[0] - new_leaf->coords.min[0]) / 2;
-	    half_edge[1] = fabs(new_leaf->coords.max[1] - new_leaf->coords.min[1]) / 2;
-	    half_edge[2] = fabs(new_leaf->coords.max[2] - new_leaf->coords.min[2]) / 2;
-            
-            if (new_leaf->is_leaf) {
-                splitCubes(new_leaf, half_edge);
-                new_leaf->is_leaf = 0;
-                new_leaf->protein.isSet = 0;
-                old_leaf = findLeaf(new_leaf, new_protein.point);
-                new_leaf = findLeaf(new_leaf, protein.point);
-            }
+	    
+	    // calcula novamente cada areasta para o novo cubo
+	    for(a = 0; a< 3; a++) half_edge[a] = fabs(new_leaf->coords.max[a] - new_leaf->coords.min[a]) / 2;	    
+	    
+	    // divite então o cubo
+            splitCubes(new_leaf, half_edge);
+            new_leaf->is_leaf = 0;
+            new_leaf->protein.isSet = 0;
+	    //encontra as novas folhas
+            old_leaf = findLeaf(new_leaf, new_protein.point);
+            new_leaf = findLeaf(new_leaf, protein.point);
+	    //caso as novas folhas forem iguais, essa operação se repetirá
 	}
 
+	//e então insere as proteínas nas suas 
+	// repectivas folhas.
 	setLeafProtein(new_leaf, protein);
 	setLeafProtein(old_leaf, new_protein);
     }
@@ -268,12 +347,24 @@ void getPointsInsideBox(Leaf* leaf, Ligante lig, double cubeLig_edge, int *sum) 
     int a;
     Cube lig_cube;
 
+    // Função recursiva que soma a quantidade de proteínas
+    // dentro do cubo do ligante.
+    
     for (a = 0; a < 3; a++) {
+	// este loop pega a coordenada do ligante
+	// e então calcula x,y,z de seu max e seu min
 	lig_cube.max[a] = lig.point[a] + (cubeLig_edge / 2);
 	lig_cube.min[a] = lig.point[a] - (cubeLig_edge / 2);
     }
 
+    // se for uma folha
     if (leaf->is_leaf) {
+	// e se a proteína estiver setada:
+	
+	// -> aqui se faz necessário uma condição dentro da outra.
+	// Caso não seja uma folha(é um nó), deve-se chamar a recursividade.
+	// Porém se for folha e a proteína não estiver setada
+	// (folha vazia), nada deve-se fazer.
 	if (leaf->protein.isSet) {
 	    if (    leaf->protein.point[0] < lig_cube.min[0] ||
 		    leaf->protein.point[1] < lig_cube.min[1] ||
@@ -305,14 +396,12 @@ void insertOnMiddle(Ligante* new_ligante, Ligante* aux){
     aux->prox = new_ligante;
 }
 
-
 void putLiganteOnLiganteList(Ligante new_ligante, LiganteList* ligant_list){
     
     Ligante *aux, *new;
     
-    
     aux = ligant_list->header;
-    
+    new = NULL;
     new = (Ligante *) malloc( sizeof(Ligante) );
     strcpy(new->name, new_ligante.name);
     new->sum = new_ligante.sum;
@@ -349,12 +438,15 @@ int main(int argc, char** argv) {
     fgets(str, sizeof (str), stdin);
     sscanf(str, " %s %s", aux, lig_name);
     
+    ligant_list = NULL;
     ligant_list = (LiganteList *) malloc( sizeof(LiganteList) );
-    ligant_list->header = (Ligante *) malloc( sizeof(Ligante)*2 );
+    ligant_list->header = NULL;
+    ligant_list->header = (Ligante *) malloc( sizeof(Ligante) );
     ligant_list->header->prox = NULL;
 
     while (aux[0] != '-' && aux[1] != '1') {
 
+	root = NULL;
 	root = (Leaf *) malloc(sizeof (Leaf)*2);
 	root->is_leaf = 1;
 	root->protein.isSet = 0;
@@ -397,18 +489,24 @@ int main(int argc, char** argv) {
 
 	putLiganteOnLiganteList(new_ligante, ligant_list);
 	
-	free(root);
+	freeTree(root);
 	sscanf(str, " %s %s", aux, lig_name);
     }
     
-    Ligante* print;
-    
+    Ligante *print, *print_aux;
     print = ligant_list->header->prox;
+    print_aux = NULL;
     
-    while(print != NULL){
+    while(1){
 	printf("%s: %d\n", print->name, print->sum);
+	print_aux = print;
 	print = print->prox;
+	free(print_aux);
+	if(print == NULL) break;	
     }
+    
+    free(ligant_list);
+    free(ligant_list->header);
     
     return (EXIT_SUCCESS);
 }
