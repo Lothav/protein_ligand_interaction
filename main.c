@@ -12,6 +12,8 @@
 
 #define MAX 500
 
+
+
 typedef struct prot_st {
     // point[] refere-se à cordenada da da Proteína:
     // Sendo:
@@ -20,6 +22,7 @@ typedef struct prot_st {
     //  - point[2] = z
     double point[3];
     int isSet;
+  
 } Protein;
 
 typedef struct lig_st {
@@ -29,7 +32,16 @@ typedef struct lig_st {
     //  - point[1] = y
     //  - point[2] = z
     double point[3];
+    char name[11];
+    int sum;
+    struct lig_st *prox;
 } Ligante;
+
+typedef struct ligante_list_st{
+
+    Ligante *header;
+   
+}LiganteList;
 
 typedef struct cube_str {
     // max/min referem-se às cordenadas de um certo cubo:
@@ -94,7 +106,8 @@ Ligante getNewLigante(char* str) {
     // armazena os pontos do ligante
     // (o aux é apenas para ignorar os nomes
     // tenho sérios problemas com regex)
-    sscanf(str, " %s %s %lf %lf %lf", aux, aux, &new_lig.point[0], &new_lig.point[1], &new_lig.point[2]);
+    sscanf(str, " %s %s %lf %lf %lf", aux, aux, 
+	&new_lig.point[0], &new_lig.point[1], &new_lig.point[2]);
     // retorna o novo ligante para que seja
     // comparado na árvore.
     return new_lig;
@@ -255,7 +268,7 @@ void getPointsInsideBox(Leaf* leaf, Ligante lig, double cubeLig_edge, int *sum) 
     int a;
     Cube lig_cube;
 
-    for (a = 0; a < 4; a++) {
+    for (a = 0; a < 3; a++) {
 	lig_cube.max[a] = lig.point[a] + (cubeLig_edge / 2);
 	lig_cube.min[a] = lig.point[a] - (cubeLig_edge / 2);
     }
@@ -280,11 +293,44 @@ void getPointsInsideBox(Leaf* leaf, Ligante lig, double cubeLig_edge, int *sum) 
 
 		    leaf->sons[a]->coords.min[0] > lig_cube.max[0] ||
 		    leaf->sons[a]->coords.min[1] > lig_cube.max[1] ||
-		    leaf->sons[a]->coords.min[2] > lig_cube.max[2])continue;
+		    leaf->sons[a]->coords.min[2] > lig_cube.max[2])
+		continue;
                 else getPointsInsideBox(leaf->sons[a], lig, cubeLig_edge, sum);
 	}
     }
 }
+
+void insertOnMiddle(Ligante* new_ligante, Ligante* aux){
+    new_ligante->prox = aux->prox;
+    aux->prox = new_ligante;
+}
+
+
+void putLiganteOnLiganteList(Ligante new_ligante, LiganteList* ligant_list){
+    
+    Ligante *aux, *new;
+    
+    
+    aux = ligant_list->header;
+    
+    new = (Ligante *) malloc( sizeof(Ligante) );
+    strcpy(new->name, new_ligante.name);
+    new->sum = new_ligante.sum;
+    new->prox = NULL;
+    
+    while(aux->prox != NULL){
+	if(aux->prox->sum >= new->sum){
+	    insertOnMiddle(new, aux);
+	    break;
+	}
+	aux = aux->prox;
+    }
+    if(aux->prox == NULL) {
+	aux->prox = new;
+	aux->prox->prox = NULL;
+    }
+}
+
 
 int main(int argc, char** argv) {
 
@@ -294,14 +340,18 @@ int main(int argc, char** argv) {
     int sum, *p_sum, a;
     Protein new_protein;
     Ligante new_ligante;
+    LiganteList *ligant_list;
 
     // armazena o valor da aresta do cubo em volta de cada ligante
     fgets(str, sizeof (str), stdin);
     sscanf(str, " %lf", &cubeLig_edge);
 
-
     fgets(str, sizeof (str), stdin);
     sscanf(str, " %s %s", aux, lig_name);
+    
+    ligant_list = (LiganteList *) malloc( sizeof(LiganteList) );
+    ligant_list->header = (Ligante *) malloc( sizeof(Ligante)*2 );
+    ligant_list->header->prox = NULL;
 
     while (aux[0] != '-' && aux[1] != '1') {
 
@@ -339,14 +389,26 @@ int main(int argc, char** argv) {
 
 	    // agora recebemos os ligantes:
 	    new_ligante = getNewLigante(str);
+	    strcpy(new_ligante.name, lig_name);
 	    getPointsInsideBox(root, new_ligante, cubeLig_edge, p_sum);
-
+	    new_ligante.sum = sum;
 	    fgets(str, sizeof (str), stdin);
 	}
-	free(root);
-	printf("%s: %d\n", lig_name, sum);
 
+	putLiganteOnLiganteList(new_ligante, ligant_list);
+	
+	free(root);
 	sscanf(str, " %s %s", aux, lig_name);
     }
+    
+    Ligante* print;
+    
+    print = ligant_list->header->prox;
+    
+    while(print != NULL){
+	printf("%s: %d\n", print->name, print->sum);
+	print = print->prox;
+    }
+    
     return (EXIT_SUCCESS);
 }
